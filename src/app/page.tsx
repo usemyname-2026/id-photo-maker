@@ -196,7 +196,7 @@ export default function Home() {
                     {(compositePreview ?? resultUrl) && (
                       <div className="relative">
                         <img
-                          src={compositePreview ?? resultUrl}
+                          src={(compositePreview ?? resultUrl) ?? ''}
                           alt="证件照预览"
                           className="max-h-48 rounded-lg object-contain border-2 border-indigo-200"
                         />
