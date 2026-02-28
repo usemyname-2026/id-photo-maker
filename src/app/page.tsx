@@ -249,7 +249,6 @@ export default function Home() {
                           ? {
                               backgroundColor: color.value,
                               color: color.id === 'white' ? '#334155' : '#fff',
-                              ringColor: '#6366f1',
                             }
                           : {}
                       }
