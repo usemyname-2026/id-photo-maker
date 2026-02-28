@@ -10,3 +10,9 @@ export const BACKGROUND_COLORS = [
   { id: 'red', name: '红色', value: '#B22222', class: 'bg-[#B22222]' },
   { id: 'blue', name: '蓝色', value: '#4169E1', class: 'bg-[#4169E1]' },
 ] as const;
+
+// 支付弹窗配置 - 请替换为你的收款码和微信号
+export const PAYMENT_CONFIG = {
+  wechatId: 'your_wechat_id', // 替换为你的微信号
+  wechatQrPath: '/wechat-qr.png', // 将微信收款码图片放到 public/wechat-qr.png
+};

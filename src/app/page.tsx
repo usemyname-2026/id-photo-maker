@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { PHOTO_SIZES, BACKGROUND_COLORS } from '@/lib/constants';
+import { PHOTO_SIZES, BACKGROUND_COLORS, PAYMENT_CONFIG } from '@/lib/constants';
 
 type ProcessingState = 'idle' | 'uploading' | 'processing' | 'done' | 'error';
 
@@ -37,6 +37,8 @@ export default function Home() {
   const [photoSize, setPhotoSize] = useState<string>('1inch');
   const [state, setState] = useState<ProcessingState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showWechatId, setShowWechatId] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 底色切换时，用 Canvas 合成透明人像与背景色，实时更新预览
@@ -291,7 +293,7 @@ export default function Home() {
                 {state === 'processing' ? '处理中...' : '去除背景'}
               </button>
               <button
-                onClick={handleDownload}
+                onClick={() => setShowPaymentModal(true)}
                 disabled={!resultUrl}
                 className="flex-1 py-3 px-6 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -317,6 +319,105 @@ export default function Home() {
           使用 Remove.bg API 进行背景去除 · 请确保照片光线充足、人脸清晰
         </p>
       </div>
+
+      {/* 支付弹窗 */}
+      {showPaymentModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+          onClick={() => {
+            setShowPaymentModal(false);
+            setShowWechatId(false);
+          }}
+        >
+          <div
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => {
+                setShowPaymentModal(false);
+                setShowWechatId(false);
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              aria-label="关闭"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="p-8">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-4">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800">获取高清证件照</h3>
+                <p className="mt-2 text-slate-600 text-[15px] leading-relaxed">
+                  AI 抠图需要服务器成本，支持 <span className="font-semibold text-indigo-600">1 元</span> 即可获取高清无水印原图
+                </p>
+              </div>
+
+              {/* 微信收款码区域 - 将你的收款码放到 public/wechat-qr.png */}
+              <div className="flex justify-center mb-6">
+                <div className="relative w-48 h-48 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={PAYMENT_CONFIG.wechatQrPath}
+                    alt="微信收款码"
+                    className="w-full h-full object-contain relative z-10"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      const placeholder = (e.target as HTMLImageElement).parentElement?.querySelector('.qr-placeholder');
+                      placeholder?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="qr-placeholder hidden absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-sm p-4">
+                    <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14" />
+                    </svg>
+                    <span className="text-center">将收款码放到<br />public/wechat-qr.png</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowWechatId(true)}
+                  className="w-full py-3 px-4 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                >
+                  我已经支付，人工获取
+                </button>
+                {showWechatId && (
+                  <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100">
+                    <p className="text-sm text-slate-600 mb-1">添加微信获取图片：</p>
+                    <p className="text-lg font-semibold text-indigo-600">{PAYMENT_CONFIG.wechatId}</p>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(PAYMENT_CONFIG.wechatId);
+                      }}
+                      className="mt-2 text-sm text-indigo-600 hover:text-indigo-700"
+                    >
+                      复制微信号
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    handleDownload();
+                    setShowPaymentModal(false);
+                    setShowWechatId(false);
+                  }}
+                  className="w-full py-3 px-4 rounded-lg font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                >
+                  我已支付，立即下载
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
